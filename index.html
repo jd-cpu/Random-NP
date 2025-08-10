@@ -1,62 +1,51 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>랜덤 Post-test 퀴즈</title>
-  <link rel="manifest" href="manifest.json?v=<?=Date.now()?>"> 
-  <meta name="theme-color" content="#ffffff">
-  <style>
-    body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; text-align: center; }
-    button { padding: 10px 20px; font-size: 16px; margin: 10px; cursor: pointer; }
-    #question, #answer { white-space: pre-line; margin-top: 20px; font-size: 18px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>랜덤 Post-test 퀴즈</title>
+    <link rel="manifest" href="manifest.json?v=<?=Date.now()?>">
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        #question, #answer { white-space: pre-line; margin: 20px 0; font-size: 1.2em; }
+        button { margin: 5px; padding: 10px 20px; font-size: 1em; }
+    </style>
 </head>
 <body>
-  <h1>랜덤 Post-test 퀴즈</h1>
-  <div id="question"></div>
-  <div id="answer" style="display:none; color:blue;"></div>
-  <div>
+    <h1>랜덤 Post-test 퀴즈</h1>
+    <div id="question">문제를 불러오는 중...</div>
+    <div id="answer"></div>
     <button onclick="showAnswer()">정답 보기</button>
     <button onclick="nextQuestion()">다음 문제</button>
-  </div>
 
-  <script>
-    // 문제와 정답 목록
+    <script>
     const quizData = [
-      { q: "도파민을 주된 신경전달물질로 사용하는 4개의 신경 경로를 기술하시오.", a: "Nigrostriatal, mesocortical, mesolimbic, tuberoinfundibular pathway" },
-      { q: "Piaget의 인지 발달 4단계를 쓰고 해당하는 나이와 특징을 약술하시오.", a: "감각운동기(출생-2세, 감각적 관찰, 운동기능 조절) \n전조작기(2-7세, semiotic function) \n구체적 조작기(7-12세, 현실 인식, 조작적 사고, 외부 정보에 주의 기울임, 타인의 관점에서 사물 봄) \n형식적 조작기(12세-후기 청소년기, 논리적, 체계적, 추상적 사고, 연역적 추리)" },
-      { q: "프로이트가 ‘구조 이론(structural theory)'에서 소개한 이드(id), 자아(ego), 초자아(superego)의 기능에 대해 약술하시오.", a: "이드: 본능적 욕구, 즉각 만족 원함, 무의식의 대부분, 심리적 현상의 에너지 공급원 \n자아: 현실원칙 입각, 모든 정신현상 총괄, 이드와 현실 사이 타협 추구, 이드와 초자아 사이에서 갈등 \n초자아: 양심, 이상 추구" }
-      { q: "에릭 에릭슨은 정신사회 발달 이론에서 자아의 발달단계를 여덟 단계로 구분하여 설명하였다. 각 단계별 발달과제를 쓰시오.", a: "유아기(신뢰vs불신) \n초기 아동기(자율성vs수치심) \n후기 아동기(주도성vs죄책감) \n학령기(근면성vs열등감) \n청소년기(정체성 확립vs혼란) \n청년기(친밀감vs소외감) \n중년기(생산성vs정체감) \n노년기(통합성vs절망감)" },
-      { q: "정신상태검사시 평가하는 기본적인 영역은 다음과 같다. \n[외모(general appearance) 및 행동(behavior)과 태도(attitude), 운동 활동(motor activity), 기분(mood)과 정동표현(affect expression), 말(speech), 지각(perception), 사고(thought), 감각(sensorium)과 인지(cognition), 판단(judgement)과 병식(insight)] \n기분(mood)과 정동(affect)의 개념에 대해 간략하게 설명하시오.", a: "기분: 지배적&지속적 감정, 주관적이므로 말로 잘 표현됨 \n정동: 표현 행동(얼굴 표정 등)을 근거로 추정되는 감정, 임상가의 시선, 기분과 일치할 수도 아닐 수도, 감정의 quality, quantity, congruence, appropriateness, range로 기술" },
-      { q: "주의력결핍 과잉행동장애(attention deficit hyperactivity disorder, ADHD)의 DSM-5 진단기준에서 \n1)부주의와 2)과잉행동-충동성에 해당하는 증상을 각각 2가지 이상 쓰시오. ", a: "부주의: 지속 집중 어려움, 일 잘 못 끝냄 \n과잉행동-충동성: 자리에 못 앉아있음, 말 너무 많음" },
-      { q: "ADHD의 치료에서 1) 약물치료로 국내에서 가장 흔하게 사용되고 있는 약물과 2) ADHD 아동의 심리사회적 치료 중 비교적 치료효과가 검증된 방법을 쓰시오.", a: "Methylphenidate, 부모교육" },
-      { q: "틱(tic)이란 짧고 반복적이고 갑작스럽고 상동적이며 상대적으로 불수의적인 근육의 수축을 의미한다. \n1)틱과 감별을 해야할 이상운동 증상(3가지 이상)과, 2) 투렛장애(음성틱과 운동틱이 1년 이상 있을 경우)에서 가장 흔하게 동반되는 정신장애를 쓰시오.", a: "1) 근긴장성 이상운동, 근간대성 이상운동, 편측무도증, 편측 안면경련, 강박행동, 아테토이드 이상운동, 무도증 \n2) 전조감각충동" },
-      { q: "조현병의 DSM-5 진단기준에서 1개월 동안 상당 부분의 시간에 존재해야 하는 증상 중, 진단을 위해 최소 하나 이상 포함해야하는 증상 3가지를 쓰시오.", a: "망상, 환각, 와해된 언어" },
-      { q: "조현병에서 보이는 대표적인 사고과정의 장애인 1) 연상 이완(loosening of association)의 개념을 쓰고, \n연상 이완의 한 형태인 2) 우원증(circumstantiality)과 3) 사고이탈(tangentiality)에 대해 약술하시오.", a: "1) 연상 이완: 생각이 한 주제에서 연관성 없는 다른 주제로 진행 \n2) 우원증: 말하고자 하는 바를 직접적으로 말하지 않고 불필요하게 주석 붙이다가 결론에는 도달 \n3) 사고의 이탈: 우원증보다 심함, 결론에도 도달하지 못함" },
-      { q: "", a: "" },
+        { question: "첫 번째 문제입니다.\n줄바꿈 예시", answer: "첫 번째 정답" },
+        { question: "두 번째 문제입니다.", answer: "두 번째 정답" }
     ];
 
-    let currentIndex = -1;
+    let currentIndex = Math.floor(Math.random() * quizData.length);
 
-    function nextQuestion() {
-      document.getElementById('answer').style.display = 'none';
-      let newIndex;
-      do {
-        newIndex = Math.floor(Math.random() * quizData.length);
-      } while (newIndex === currentIndex && quizData.length > 1);
-      currentIndex = newIndex;
-
-      document.getElementById('question').innerText = quizData[currentIndex].q;
-      document.getElementById('answer').innerText = quizData[currentIndex].a;
+    function showQuestion() {
+        const qElem = document.getElementById("question");
+        qElem.innerText = quizData[currentIndex].question;
+        document.getElementById("answer").innerText = "";
     }
 
     function showAnswer() {
-      document.getElementById('answer').style.display = 'block';
+        document.getElementById("answer").innerText = quizData[currentIndex].answer;
     }
 
-    // 페이지 로드 시 첫 문제 표시
-    nextQuestion();
-  </script>
+    function nextQuestion() {
+        let newIndex;
+        do {
+            newIndex = Math.floor(Math.random() * quizData.length);
+        } while (newIndex === currentIndex && quizData.length > 1);
+        currentIndex = newIndex;
+        showQuestion();
+    }
+
+    window.onload = showQuestion;
+    </script>
 </body>
 </html>
