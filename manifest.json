@@ -1,6 +1,6 @@
 {
-  "name": "랜덤 Post-test 퀴즈",
-  "short_name": "퀴즈",
+  "name": "정신과 랜덤 Post-test 퀴즈",
+  "short_name": "정신과 퀴즈",
   "start_url": "./?v=20250810",
   "display": "standalone",
   "background_color": "#ffffff",
