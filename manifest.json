@@ -1,5 +1,5 @@
 {
-    "name": "랜덤 퀴즈",
+    "name": "랜덤 Pre-test 퀴즈",
     "short_name": "퀴즈",
     "start_url": "./?v=2",
     "display": "standalone",
