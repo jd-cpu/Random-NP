@@ -1,29 +1,49 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>랜덤 Post-test 퀴즈</title>
-  <link rel="manifest" href="manifest.json?v=20250810">
+
+  <!-- 캐시 방지(HTML 요청은 항상 새로 하도록 유도) -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ffffff">
+
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-    #question { font-size: 1.2em; margin-bottom: 20px; white-space: pre-line; }
-    #answer { font-size: 1.2em; margin-top: 20px; color: green; white-space: pre-line; }
-    button { padding: 10px 20px; margin: 5px; font-size: 1em; }
-    #status { margin-top: 15px; font-size: 0.9em; color: gray; }
+    body { font-family: Arial, sans-serif; text-align:center; padding:18px; max-width:900px; margin:auto; }
+    header { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    #btnReviewTop { font-size:0.9rem; padding:6px 10px; }
+    #status { color:#666; font-size:0.95rem; margin-top:8px; }
+    #question { white-space: pre-line; font-size:1.2rem; margin:20px 0; }
+    #answer { white-space: pre-line; font-size:1.05rem; color:#0a6; font-weight:600; margin-top:12px; display:none; }
+    #controls { margin-top:14px; }
+    button { padding:10px 16px; margin:6px; font-size:1rem; cursor:pointer; }
   </style>
 </head>
 <body>
-  <h1>정신과 랜덤 Post-test 퀴즈</h1>
-  <div id="question">문제가 여기에 표시됩니다</div>
+  <header>
+    <h1 style="margin:0; font-size:1.25rem;">랜덤 Post-test 퀴즈</h1>
+    <div>
+      <button id="btnReviewTop" title="복습(오답) 모드로 들어갑니다">복습 (0)</button>
+    </div>
+  </header>
+
+  <div id="status">로딩 중...</div>
+  <div id="question">잠시만요...</div>
   <div id="answer"></div>
-  <button onclick="showAnswer()">정답 보기</button>
-  <button onclick="nextQuestion()">다음 문제</button>
-  <button onclick="reviewMode()">복습 모드</button>
-  <div id="status">남은 문제: 0</div>
+
+  <div id="controls">
+    <button id="btnShow">정답 보기</button>
+    <button id="btnNext">다음 문제</button>
+  </div>
 
   <script>
-    // 문제 데이터 (직접 채워넣으세요)
+    // ================ 문제 배열 (여기에 복붙하세요) ================
+    // 형식: { q: "문제 텍스트 (줄바꿈: \\n 가능)", a: "정답 텍스트" }
     const questions = [
             { q: "도파민을 주된 신경전달물질로 사용하는 4개의 신경 경로를 기술하시오.", a: "Nigrostriatal, mesocortical, mesolimbic, tuberoinfundibular pathway" },
             { q: "Piaget의 인지 발달 4단계를 쓰고 해당하는 나이와 특징을 약술하시오.", a: "감각운동기(출생-2세, 감각적 관찰, 운동기능 조절) \n전조작기(2-7세, semiotic function) \n구체적 조작기(7-12세, 현실 인식, 조작적 사고, 외부 정보에 주의 기울임, 타인의 관점에서 사물 봄) \n형식적 조작기(12세-후기 청소년기, 논리적, 체계적, 추상적 사고, 연역적 추리)" },
@@ -176,64 +196,167 @@
             { q: "리튬의 혈중 농도에 영향을 미치는 요인들에는 어떤 것들이 있는가? 5가지 이상 쓰시오", a: "탈수, 발한, 설사, 발열, 구토, NSAID 과다복용, 신기능 저하, 이뇨제 남용" },
             { q: "노년기 우울장애의 위험요인에 대하여 생물학적 위험요인, 심리학적 위험요인을 각각 2가지 이상 기술하시오", a: "생물학적: 여성, 심혈관 질환, 코티솔의 혈중 농도 증가 지속, 세로토닌계 신경전달의 활성 저하, 세로토닌 수용체 유전자 이상 \n심리학적: 양가감정, 신경증, 인지왜곡, 스트레스성 생활사건, 낮은 사회경제적 상태" }
         ];
+    // =============================================================
 
-    let shuffled = [];
-    let currentIndex = 0;
-    let reviewList = [];
-    let reviewModeOn = false;
-
-    function shuffle(array) {
-      return array.sort(() => Math.random() - 0.5);
+    // 유틸: 배열 섞기 (Fisher-Yates)
+    function shuffleArray(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
     }
 
-    function initQuiz() {
-      shuffled = shuffle([...questions]);
-      currentIndex = 0;
-      reviewList = [];
-      reviewModeOn = false;
-      showQuestion();
-    }
+    // 상태 변수
+    let order = [];          // 섞인 문제 인덱스 배열
+    let pos = 0;             // order 내 현재 위치
+    let inReviewMode = false;
+    let reviewList = [];     // { q, a } 객체들의 배열 (localStorage에 저장)
+    let reviewOrder = [];    // 복습 시 인덱스 순서
 
-    function showQuestion() {
-      if (currentIndex >= shuffled.length) {
-        document.getElementById('question').innerText = "퀴즈 끝!";
-        document.getElementById('answer').innerText = "";
-        document.getElementById('status').innerText = "";
+    // 요소
+    const elStatus = document.getElementById('status');
+    const elQuestion = document.getElementById('question');
+    const elAnswer = document.getElementById('answer');
+    const elBtnShow = document.getElementById('btnShow');
+    const elBtnNext = document.getElementById('btnNext');
+    const elBtnReviewTop = document.getElementById('btnReviewTop');
+
+    // 로컬스토리지 키
+    const REVIEW_KEY = 'quiz_review_list_v1';
+
+    // 초기화
+    function init() {
+      if (!Array.isArray(questions) || questions.length === 0) {
+        elQuestion.innerText = '문제를 index.html의 questions 배열에 넣어 주세요.';
+        elStatus.innerText = '';
+        elAnswer.style.display = 'none';
         return;
       }
-      document.getElementById('question').innerText = shuffled[currentIndex].q;
-      document.getElementById('answer').innerText = "";
+      // order = 섞인 인덱스 배열 (페이지 열 때 한 번만)
+      order = shuffleArray([...Array(questions.length).keys()]);
+      pos = 0;
+      inReviewMode = false;
+      // 로컬스토리지에서 reviewList 불러오기(있으면 JSON parse)
+      try {
+        reviewList = JSON.parse(localStorage.getItem(REVIEW_KEY) || '[]');
+      } catch(e) {
+        reviewList = [];
+      }
+      updateReviewButton();
+      showCurrent();
+    }
+
+    // 현재 문제 객체 리턴
+    function currentQuestion() {
+      if (inReviewMode) {
+        if (reviewOrder.length === 0) return null;
+        const idx = reviewOrder[pos];
+        return reviewList[idx] || null;
+      } else {
+        if (pos >= order.length) return null;
+        const qidx = order[pos];
+        return questions[qidx] || null;
+      }
+    }
+
+    // 화면에 현재 문제 표시
+    function showCurrent() {
+      const cur = currentQuestion();
+      if (!cur) {
+        elQuestion.innerText = inReviewMode ? '복습이 완료되었습니다.' : '모든 문제를 풀었습니다.';
+        elAnswer.style.display = 'none';
+        updateStatus();
+        return;
+      }
+      elQuestion.innerText = cur.q;
+      elAnswer.innerText = cur.a;
+      elAnswer.style.display = 'none';
       updateStatus();
     }
 
-    function showAnswer() {
-      document.getElementById('answer').innerText = shuffled[currentIndex].a;
-    }
-
-    function nextQuestion() {
-      const userWrong = confirm("이 문제를 오답에 추가할까요?");
-      if (userWrong) reviewList.push(shuffled[currentIndex]);
-      currentIndex++;
-      showQuestion();
-    }
-
-    function reviewMode() {
-      if (reviewList.length === 0) {
-        alert("복습할 오답이 없습니다!");
-        return;
-      }
-      shuffled = shuffle([...reviewList]);
-      currentIndex = 0;
-      reviewModeOn = true;
-      showQuestion();
-    }
-
+    // 상태 텍스트 업데이트
     function updateStatus() {
-      document.getElementById('status').innerText =
-        `남은 문제: ${shuffled.length - currentIndex - 1}`;
+      if (inReviewMode) {
+        elStatus.innerText = `모드: 복습  —  ${Math.min(pos+1, reviewOrder.length)} / ${reviewOrder.length} 남음: ${Math.max(0, reviewOrder.length - pos - 1)}`;
+      } else {
+        elStatus.innerText = `모드: 일반  —  ${Math.min(pos+1, order.length)} / ${order.length} 남음: ${Math.max(0, order.length - pos - 1)}`;
+      }
     }
 
-    window.onload = initQuiz;
+    // 정답 보기: 정답 노출 + 자동으로 오답 목록에 추가(중복 방지)
+    function showAnswer() {
+      const cur = currentQuestion();
+      if (!cur) return;
+      elAnswer.style.display = 'block';
+      // 자동 오답 추가 (중복 방지: q+a 일치 기준)
+      const exists = reviewList.some(item => item.q === cur.q && item.a === cur.a);
+      if (!exists) {
+        reviewList.push({ q: cur.q, a: cur.a });
+        localStorage.setItem(REVIEW_KEY, JSON.stringify(reviewList));
+        updateReviewButton();
+      }
+    }
+
+    // 다음 문제: 단순히 pos++ 후 showCurrent
+    function nextQuestion() {
+      if (inReviewMode) {
+        pos++;
+        if (pos >= reviewOrder.length) {
+          showCurrent(); // 완료 메시지
+          return;
+        }
+      } else {
+        pos++;
+        if (pos >= order.length) {
+          showCurrent(); // 완료 메시지
+          return;
+        }
+      }
+      showCurrent();
+    }
+
+    // 복습 버튼 (상단): 복습 모드로 진입 / 복귀
+    function toggleReviewMode() {
+      if (!inReviewMode) {
+        if (reviewList.length === 0) { alert('복습할 오답이 없습니다.'); return; }
+        // 복습 모드 시작: reviewOrder를 셔플
+        reviewOrder = shuffleArray([...Array(reviewList.length).keys()]);
+        inReviewMode = true;
+        pos = 0;
+        elBtnReviewTop.innerText = '복습 종료';
+      } else {
+        // 복귀: 일반 모드 (pos는 현재 문제 위치 그대로 두거나 0으로)
+        inReviewMode = false;
+        pos = Math.min(pos, order.length-1);
+        elBtnReviewTop.innerText = `복습 (${reviewList.length})`;
+      }
+      showCurrent();
+    }
+
+    // 오답 목록 버튼 텍스트 갱신
+    function updateReviewButton() {
+      elBtnReviewTop.innerText = inReviewMode ? '복습 종료' : `복습 (${reviewList.length})`;
+      elBtnReviewTop.style.display = reviewList.length >= 0 ? 'inline-block' : 'none';
+    }
+
+    // 이벤트 바인딩
+    elBtnShow.addEventListener('click', showAnswer);
+    elBtnNext.addEventListener('click', nextQuestion);
+    elBtnReviewTop.addEventListener('click', toggleReviewMode);
+
+    // 서비스워커 등록 (sw.js가 루트에 있어야 함)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(e => {
+          console.warn('ServiceWorker 등록 실패:', e);
+        });
+      });
+    }
+
+    // 시작
+    init();
   </script>
 </body>
 </html>
