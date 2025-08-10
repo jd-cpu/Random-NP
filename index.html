@@ -1,53 +1,79 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>랜덤 Post-test 퀴즈</title>
-  <link rel="manifest" href="manifest.json?v=<?=Date.now()?>">
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-    #question { font-size: 1.5em; margin-bottom: 20px; white-space: pre-line; }
-    #answer { font-size: 1.2em; color: green; margin-top: 20px; display: none; white-space: pre-line; }
-    button { margin: 10px; padding: 10px 20px; font-size: 1em; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>랜덤 Post-test 퀴즈</title>
+
+    <!-- 캐시 방지 메타태그 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- PWA 설정 -->
+    <link rel="manifest" href="manifest.json?v=20250810">
+    <meta name="theme-color" content="#ffffff">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        #question {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            white-space: pre-line; /* \n 줄바꿈 표시 */
+        }
+        button {
+            font-size: 1em;
+            margin: 10px;
+            padding: 10px 20px;
+        }
+        #answer {
+            margin-top: 15px;
+            font-weight: bold;
+            color: blue;
+            white-space: pre-line;
+        }
+    </style>
 </head>
 <body>
-  <h1>랜덤 Post-test 퀴즈</h1>
-  <div id="question"></div>
-  <div id="answer"></div>
-  <button onclick="showAnswer()">정답 보기</button>
-  <button onclick="nextQuestion()">다음 문제</button>
+    <h1>랜덤 Post-test 퀴즈</h1>
+    <div id="question"></div>
+    <button onclick="showAnswer()">정답 보기</button>
+    <button onclick="nextQuestion()">다음 문제</button>
+    <div id="answer"></div>
 
-  <script>
-    const questions = [
-      { q: "대한민국의 수도는?", a: "서울" },
-      { q: "2 + 2 = ?", a: "4" },
-      { q: "사과를 영어로 하면?", a: "Apple" }
-      // 여기에 문제 계속 추가 (줄바꿈: \n)
-    ];
+    <script>
+        // 문제 & 정답 데이터
+        const questions = [
+            { q: "문제 1\n줄바꿈 테스트", a: "정답 1" },
+            { q: "문제 2", a: "정답 2" },
+            { q: "문제 3", a: "정답 3" }
+        ];
 
-    // 문제 랜덤 섞기
-    questions.sort(() => Math.random() - 0.5);
+        // 문제 순서 랜덤 섞기
+        let shuffledQuestions = [...questions].sort(() => Math.random() - 0.5);
+        let currentIndex = 0;
 
-    let currentIndex = 0;
+        function showQuestion() {
+            const current = shuffledQuestions[currentIndex];
+            document.getElementById('question').innerText = current.q;
+            document.getElementById('answer').innerText = "";
+        }
 
-    function loadQuestion() {
-      document.getElementById('question').innerText = questions[currentIndex].q;
-      document.getElementById('answer').innerText = questions[currentIndex].a;
-      document.getElementById('answer').style.display = 'none';
-    }
+        function showAnswer() {
+            document.getElementById('answer').innerText = shuffledQuestions[currentIndex].a;
+        }
 
-    function showAnswer() {
-      document.getElementById('answer').style.display = 'block';
-    }
+        function nextQuestion() {
+            currentIndex = (currentIndex + 1) % shuffledQuestions.length;
+            showQuestion();
+        }
 
-    function nextQuestion() {
-      currentIndex = (currentIndex + 1) % questions.length;
-      loadQuestion();
-    }
-
-    loadQuestion();
-  </script>
+        // 첫 문제 표시
+        showQuestion();
+    </script>
 </body>
 </html>
