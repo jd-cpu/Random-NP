@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Random Pretest Quiz</title>
+  <link rel="manifest" href="manifest.json?v=2">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    h1 { text-align: center; }
+    textarea { width: 100%; height: 150px; margin-bottom: 10px; }
+    button { padding: 10px 20px; margin: 5px 0; }
+    .answer { margin-top: 20px; padding: 10px; background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <h1>Random Pretest Quiz</h1>
+  <p>문제를 입력하세요 (줄바꿈으로 구분, 정답은 문제 바로 아래 줄에 입력):</p>
+  <textarea id="quizInput"></textarea>
+  <button onclick="showRandom()">랜덤 문제</button>
+  <div id="question"></div>
+  <button onclick="showAnswer()">정답 보기</button>
+  <div id="answer" class="answer"></div>
+
+  <script>
+    let quizData = [];
+
+    function parseQuiz() {
+      const lines = document.getElementById('quizInput').value.split('\n');
+      quizData = [];
+      for (let i = 0; i < lines.length; i += 2) {
+        if (lines[i] && lines[i+1]) {
+          quizData.push({ question: lines[i], answer: lines[i+1] });
+        }
+      }
+    }
+
+    function showRandom() {
+      parseQuiz();
+      if (quizData.length === 0) {
+        document.getElementById('question').innerText = "문제를 입력하세요.";
+        return;
+      }
+      const randomIndex = Math.floor(Math.random() * quizData.length);
+      const q = quizData[randomIndex];
+      document.getElementById('question').innerText = q.question;
+      document.getElementById('answer').innerText = "";
+      window.currentAnswer = q.answer;
+    }
+
+    function showAnswer() {
+      if (window.currentAnswer) {
+        document.getElementById('answer').innerText = window.currentAnswer;
+      }
+    }
+  </script>
+</body>
+</html>
