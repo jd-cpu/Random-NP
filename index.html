@@ -1,36 +1,66 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Random Pretest Quiz</title>
-
-    <!-- 브라우저 캐시 방지 -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-
-    <!-- CSS 버전 쿼리 추가 -->
-    <link rel="stylesheet" href="style.css?v=1.0.0">
-
-    <!-- PWA 관련 -->
-    <link rel="manifest" href="manifest.json?v=1.0.0">
-    <meta name="theme-color" content="#ffffff">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>랜덤 Pre-test Quiz</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .question { font-weight: bold; margin-top: 20px; }
+    .answer { color: blue; margin-top: 10px; font-style: italic; display: none; }
+    button { margin-top: 10px; padding: 8px; }
+  </style>
 </head>
 <body>
-    <div id="app">
-        <h1>Random Pretest Quiz</h1>
-        <div id="quiz-container"></div>
-        <button id="next-btn">다음 문제</button>
-    </div>
+  <h1>랜덤 Pre-test Quiz</h1>
+  <div id="quiz"></div>
+  <button onclick="showAnswer()">정답 보기</button>
+  <button onclick="nextQuestion()">다음 문제</button>
 
-    <!-- JS 버전 쿼리 추가 -->
-    <script src="app.js?v=1.0.0"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js?v=1.0.0');
-        }
-    </script>
+  <script>
+    // =========================
+    // 📝 문제·정답 수정 구역
+    // =========================
+    const questions = [
+      {
+        question: "심폐소생술(CPR)의 가슴압박 비율은?",
+        answer: "30:2"
+      },
+      {
+        question: "손씻기 최소 시간은?",
+        answer: "20초"
+      },
+      {
+        question: "의료폐기물 봉투 색상은?",
+        answer: "노랑"
+      }
+    ];
+    // =========================
+
+    let currentIndex = 0;
+    const quizDiv = document.getElementById('quiz');
+
+    function showQuestion() {
+      const q = questions[currentIndex];
+      quizDiv.innerHTML = `
+        <div class="question">${q.question}</div>
+        <div class="answer" id="answer">${q.answer}</div>
+      `;
+      document.getElementById("answer").style.display = "none";
+    }
+
+    function showAnswer() {
+      document.getElementById("answer").style.display = "block";
+    }
+
+    function nextQuestion() {
+      currentIndex = (currentIndex + 1) % questions.length;
+      showQuestion();
+    }
+
+    // 처음 문제 보여주기
+    showQuestion();
+  </script>
 </body>
 </html>
