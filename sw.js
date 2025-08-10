@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = 'quiz-cache-v2';
+const CACHE_NAME = 'quiz-cache-v3';
 const FILES_TO_CACHE = [
   '/',
   '/index.html',
