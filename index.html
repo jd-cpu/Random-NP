@@ -1,58 +1,48 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Random Pretest Quiz</title>
-  <link rel="manifest" href="manifest.json?v=2">
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-    h1 { text-align: center; }
-    textarea { width: 100%; height: 150px; margin-bottom: 10px; }
-    button { padding: 10px 20px; margin: 5px 0; }
-    .answer { margin-top: 20px; padding: 10px; background: #f0f0f0; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>랜덤 퀴즈</title>
+    <link rel="manifest" href="manifest.json?v=2">
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; text-align: center; }
+        #question { font-size: 1.2em; white-space: pre-line; margin-bottom: 20px; }
+        #answer { font-size: 1.1em; color: blue; margin-top: 10px; white-space: pre-line; }
+        button { padding: 10px 20px; font-size: 1em; margin: 5px; cursor: pointer; }
+    </style>
 </head>
 <body>
-  <h1>Random Pretest Quiz</h1>
-  <p>문제를 입력하세요 (줄바꿈으로 구분, 정답은 문제 바로 아래 줄에 입력):</p>
-  <textarea id="quizInput"></textarea>
-  <button onclick="showRandom()">랜덤 문제</button>
-  <div id="question"></div>
-  <button onclick="showAnswer()">정답 보기</button>
-  <div id="answer" class="answer"></div>
+    <h1>랜덤 퀴즈</h1>
+    <div id="question"></div>
+    <div id="answer" style="display: none;"></div>
+    <button onclick="showAnswer()">정답 보기</button>
+    <button onclick="nextQuestion()">다음 문제</button>
 
-  <script>
-    let quizData = [];
+    <script>
+        // 문제와 정답 목록
+        const quizData = [
+            { q: "대한민국의 수도는?", a: "서울" },
+            { q: "사과의 영어 단어는?", a: "Apple" },
+            { q: "바다의 영어 단어는?", a: "Sea" },
+            { q: "전북대학교병원은 어느 도에 있나요?", a: "전라북도" }
+        ];
 
-    function parseQuiz() {
-      const lines = document.getElementById('quizInput').value.split('\n');
-      quizData = [];
-      for (let i = 0; i < lines.length; i += 2) {
-        if (lines[i] && lines[i+1]) {
-          quizData.push({ question: lines[i], answer: lines[i+1] });
+        let currentIndex = -1;
+
+        function nextQuestion() {
+            document.getElementById("answer").style.display = "none";
+            currentIndex = Math.floor(Math.random() * quizData.length);
+            document.getElementById("question").innerText = quizData[currentIndex].q;
         }
-      }
-    }
 
-    function showRandom() {
-      parseQuiz();
-      if (quizData.length === 0) {
-        document.getElementById('question').innerText = "문제를 입력하세요.";
-        return;
-      }
-      const randomIndex = Math.floor(Math.random() * quizData.length);
-      const q = quizData[randomIndex];
-      document.getElementById('question').innerText = q.question;
-      document.getElementById('answer').innerText = "";
-      window.currentAnswer = q.answer;
-    }
+        function showAnswer() {
+            document.getElementById("answer").innerText = quizData[currentIndex].a;
+            document.getElementById("answer").style.display = "block";
+        }
 
-    function showAnswer() {
-      if (window.currentAnswer) {
-        document.getElementById('answer').innerText = window.currentAnswer;
-      }
-    }
-  </script>
+        // 첫 문제 표시
+        nextQuestion();
+    </script>
 </body>
 </html>
