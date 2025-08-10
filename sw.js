@@ -1,33 +1,32 @@
-// sw.js
-const CACHE_NAME = 'quiz-cache-v3';
-const FILES_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+const CACHE_NAME = "quiz-cache-v3";
+const urlsToCache = [
+  "./index.html?v=3",
+  "./manifest.json?v=3",
+  "./icon.png",
+  "./icon-512.png"
 ];
 
-self.addEventListener('install', (evt) => {
-  evt.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
-    .then(() => caches.open(CACHE_NAME).then(cache => cache.addAll(FILES_TO_CACHE)))
+self.addEventListener("install", event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
   );
-  self.skipWaiting();
 });
 
-self.addEventListener('activate', (evt) => {
-  evt.waitUntil(self.clients.claim());
+self.addEventListener("fetch", event => {
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
+    })
+  );
 });
 
-self.addEventListener('fetch', (evt) => {
-  evt.respondWith(
-    fetch(evt.request).then(resp => {
-      // 성공시 캐시 업데이트(선택적)
-      if (evt.request.method === 'GET' && resp && resp.ok) {
-        caches.open(CACHE_NAME).then(c => c.put(evt.request, resp.clone()));
-      }
-      return resp;
-    }).catch(() => caches.match(evt.request).then(m => m || Promise.reject('no-match')))
+self.addEventListener("activate", event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.filter(name => name !== CACHE_NAME)
+          .map(name => caches.delete(name))
+      );
+    })
   );
 });
