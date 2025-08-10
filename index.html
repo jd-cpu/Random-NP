@@ -1,51 +1,53 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>랜덤 Post-test 퀴즈</title>
-    <link rel="manifest" href="manifest.json?v=<?=Date.now()?>">
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-        #question, #answer { white-space: pre-line; margin: 20px 0; font-size: 1.2em; }
-        button { margin: 5px; padding: 10px 20px; font-size: 1em; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>랜덤 Post-test 퀴즈</title>
+  <link rel="manifest" href="manifest.json?v=<?=Date.now()?>">
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+    #question { font-size: 1.5em; margin-bottom: 20px; white-space: pre-line; }
+    #answer { font-size: 1.2em; color: green; margin-top: 20px; display: none; white-space: pre-line; }
+    button { margin: 10px; padding: 10px 20px; font-size: 1em; }
+  </style>
 </head>
 <body>
-    <h1>랜덤 Post-test 퀴즈</h1>
-    <div id="question">문제를 불러오는 중...</div>
-    <div id="answer"></div>
-    <button onclick="showAnswer()">정답 보기</button>
-    <button onclick="nextQuestion()">다음 문제</button>
+  <h1>랜덤 Post-test 퀴즈</h1>
+  <div id="question"></div>
+  <div id="answer"></div>
+  <button onclick="showAnswer()">정답 보기</button>
+  <button onclick="nextQuestion()">다음 문제</button>
 
-    <script>
-    const quizData = [
-        { question: "도파민을 주된 신경전달물질로 사용하는 4개의 신경 경로를 기술하시오.", answer: "Nigrostriatal, mesocortical, mesolimbic, tuberoinfundibular pathway" },
-        { question: "Piaget의 인지 발달 4단계를 쓰고 해당하는 나이와 특징을 약술하시오.", answer: "감각운동기(출생-2세, 감각적 관찰, 운동기능 조절) \n전조작기(2-7세, semiotic function) \n구체적 조작기(7-12세, 현실 인식, 조작적 사고, 외부 정보에 주의 기울임, 타인의 관점에서 사물 봄) \n형식적 조작기(12세-후기 청소년기, 논리적, 체계적, 추상적 사고, 연역적 추리)" }
+  <script>
+    const questions = [
+      { q: "대한민국의 수도는?", a: "서울" },
+      { q: "2 + 2 = ?", a: "4" },
+      { q: "사과를 영어로 하면?", a: "Apple" }
+      // 여기에 문제 계속 추가 (줄바꿈: \n)
     ];
 
-    let currentIndex = Math.floor(Math.random() * quizData.length);
+    // 문제 랜덤 섞기
+    questions.sort(() => Math.random() - 0.5);
 
-    function showQuestion() {
-        const qElem = document.getElementById("question");
-        qElem.innerText = quizData[currentIndex].question;
-        document.getElementById("answer").innerText = "";
+    let currentIndex = 0;
+
+    function loadQuestion() {
+      document.getElementById('question').innerText = questions[currentIndex].q;
+      document.getElementById('answer').innerText = questions[currentIndex].a;
+      document.getElementById('answer').style.display = 'none';
     }
 
     function showAnswer() {
-        document.getElementById("answer").innerText = quizData[currentIndex].answer;
+      document.getElementById('answer').style.display = 'block';
     }
 
     function nextQuestion() {
-        let newIndex;
-        do {
-            newIndex = Math.floor(Math.random() * quizData.length);
-        } while (newIndex === currentIndex && quizData.length > 1);
-        currentIndex = newIndex;
-        showQuestion();
+      currentIndex = (currentIndex + 1) % questions.length;
+      loadQuestion();
     }
 
-    window.onload = showQuestion;
-    </script>
+    loadQuestion();
+  </script>
 </body>
 </html>
