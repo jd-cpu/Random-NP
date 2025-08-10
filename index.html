@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Random Pretest Quiz</title>
+
+    <!-- 브라우저 캐시 방지 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- CSS 버전 쿼리 추가 -->
+    <link rel="stylesheet" href="style.css?v=1.0.0">
+
+    <!-- PWA 관련 -->
+    <link rel="manifest" href="manifest.json?v=1.0.0">
+    <meta name="theme-color" content="#ffffff">
+</head>
+<body>
+    <div id="app">
+        <h1>Random Pretest Quiz</h1>
+        <div id="quiz-container"></div>
+        <button id="next-btn">다음 문제</button>
+    </div>
+
+    <!-- JS 버전 쿼리 추가 -->
+    <script src="app.js?v=1.0.0"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js?v=1.0.0');
+        }
+    </script>
+</body>
+</html>
