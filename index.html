@@ -4,45 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>랜덤 Pre-test 퀴즈</title>
-    <link rel="manifest" href="manifest.json?v=2">
+    <link rel="manifest" href="manifest.json?v=20250810">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=20250810">
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png?v=20250810">
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; text-align: center; }
-        #question { font-size: 1.2em; white-space: pre-line; margin-bottom: 20px; }
-        #answer { font-size: 1.1em; color: blue; margin-top: 10px; white-space: pre-line; }
-        button { padding: 10px 20px; font-size: 1em; margin: 5px; cursor: pointer; }
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        #question {
+            white-space: pre-line; /* 줄바꿈 적용 */
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 5px;
+        }
     </style>
 </head>
 <body>
-    <h1>랜덤 퀴즈</h1>
-    <div id="question"></div>
-    <div id="answer" style="display: none;"></div>
-    <button onclick="showAnswer()">정답 보기</button>
-    <button onclick="nextQuestion()">다음 문제</button>
+    <h1>랜덤 Pre-test 퀴즈</h1>
+    <div id="question">문제가 여기에 표시됩니다.</div>
+    <div id="answer" style="display:none; margin-top: 20px;">정답이 여기에 표시됩니다.</div>
+    <div>
+        <button onclick="showAnswer()">정답 보기</button>
+        <button onclick="nextQuestion()">다음 문제</button>
+    </div>
 
     <script>
-        // 문제와 정답 목록
-        const quizData = [
-            { q: "대한민국의 수도는?", a: "서울" },
-            { q: "사과의 영어 단어는?", a: "Apple" },
-            { q: "바다의 영어 단어는?", a: "Sea" },
-            { q: "전북대학교병원은 어느 도에 있나요?", a: "전라북도" }
+        const questions = [
+            { q: "심장이 혈액을 내보내는 동맥의 이름은?", a: "대동맥" },
+            { q: "사람의 정상 체온 범위는?", a: "약 36.5°C" },
+            { q: "혈액 내 산소를 운반하는 단백질은?", a: "헤모글로빈" }
         ];
+        let currentIndex = 0;
 
-        let currentIndex = -1;
-
-        function nextQuestion() {
-            document.getElementById("answer").style.display = "none";
-            currentIndex = Math.floor(Math.random() * quizData.length);
-            document.getElementById("question").innerText = quizData[currentIndex].q;
+        function showQuestion() {
+            const item = questions[currentIndex];
+            document.getElementById('question').innerText = item.q;
+            document.getElementById('answer').innerText = item.a;
+            document.getElementById('answer').style.display = 'none';
         }
 
         function showAnswer() {
-            document.getElementById("answer").innerText = quizData[currentIndex].a;
-            document.getElementById("answer").style.display = "block";
+            document.getElementById('answer').style.display = 'block';
+        }
+
+        function nextQuestion() {
+            currentIndex = (currentIndex + 1) % questions.length;
+            showQuestion();
         }
 
         // 첫 문제 표시
-        nextQuestion();
+        showQuestion();
     </script>
 </body>
 </html>
