@@ -3,34 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>랜덤 Pre-test 퀴즈</title>
-    <link rel="manifest" href="manifest.json?v=20250810">
-    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=20250810">
-    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png?v=20250810">
+    <title>랜덤 Post-test 퀴즈</title>
+    <link rel="manifest" href="manifest.json?v=<?=Date.now()?>">
+    <link rel="icon" sizes="192x192" href="icon-192.png">
+    <link rel="icon" sizes="512x512" href="icon-512.png">
+    <meta name="theme-color" content="#ffffff">
     <style>
-        body {
-            font-family: sans-serif;
-            text-align: center;
-            padding: 20px;
-        }
-        #question {
-            white-space: pre-line; /* 줄바꿈 적용 */
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            margin: 5px;
-        }
+        body { font-family: sans-serif; text-align: center; padding: 20px; }
+        button { padding: 10px 20px; font-size: 16px; margin: 5px; }
+        #question { font-size: 20px; margin: 20px 0; white-space: pre-line; }
+        #answer { font-size: 18px; color: blue; display: none; white-space: pre-line; }
     </style>
 </head>
 <body>
-    <h1>랜덤 Pre-test 퀴즈</h1>
-    <div id="question">문제가 여기에 표시됩니다.</div>
-    <div id="answer" style="display:none; margin-top: 20px;">정답이 여기에 표시됩니다.</div>
-    <div>
-        <button onclick="showAnswer()">정답 보기</button>
-        <button onclick="nextQuestion()">다음 문제</button>
-    </div>
+    <h1>랜덤 Post-test 퀴즈</h1>
+    <div id="question"></div>
+    <div id="answer"></div>
+    <button onclick="showAnswer()">정답 보기</button>
+    <button onclick="nextQuestion()">다음 문제</button>
 
     <script>
         const questions = [
@@ -52,11 +42,15 @@
         }
 
         function nextQuestion() {
-            currentIndex = (currentIndex + 1) % questions.length;
+            let newIndex;
+            do {
+                newIndex = Math.floor(Math.random() * questions.length);
+            } while (newIndex === currentIndex);
+            currentIndex = newIndex;
             showQuestion();
         }
 
-        // 첫 문제 표시
+        currentIndex = Math.floor(Math.random() * questions.length);
         showQuestion();
     </script>
 </body>
