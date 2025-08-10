@@ -1,49 +1,27 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>정신과 랜덤 Post-test 퀴즈</title>
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.json?v=3">
+  <meta name="theme-color" content="#4CAF50">
   <style>
-    body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; }
-    .question { font-size: 1.2em; margin-bottom: 20px; white-space: pre-line; }
-    .answer { display: none; font-weight: bold; color: green; margin-bottom: 20px; white-space: pre-line; }
-    button { margin-right: 10px; margin-bottom: 10px; }
-    .counter { margin-bottom: 10px; }
-    .mode { font-size: 0.9em; color: gray; margin-bottom: 10px; }
-    .progress-container {
-      width: 100%;
-      height: 20px;
-      background-color: #eee;
-      border-radius: 10px;
-      overflow: hidden;
-      margin-bottom: 20px;
-    }
-    .progress-bar {
-      height: 100%;
-      background-color: #4caf50;
-      width: 0%;
-      transition: width 0.3s;
-    }
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+    button { padding: 10px 15px; margin: 5px; }
+    .question { font-size: 1.3em; margin: 20px 0; }
+    .status { margin: 10px 0; font-size: 0.9em; color: #555; }
   </style>
 </head>
 <body>
   <h1>랜덤 Post-test 퀴즈</h1>
-  <div class="mode" id="mode">모드: 일반</div>
-  <div class="counter" id="counter"></div>
-  <div class="progress-container">
-    <div class="progress-bar" id="progress-bar"></div>
-  </div>
-  <div class="question" id="question"></div>
-  <div class="answer" id="answer"></div>
-
-  <button onclick="showAnswer()">정답 확인</button>
-  <button onclick="markCorrect()">정답</button>
-  <button onclick="markWrong()">오답</button>
+  <div class="status" id="status"></div>
+  <div class="question" id="question">문제가 여기에 표시됩니다.</div>
+  <div id="answers"></div>
+  <br>
   <button onclick="nextQuestion()">다음 문제</button>
-  <button onclick="toggleMode()">모드 전환</button>
-  <button onclick="resetProgress()">진행 상황 초기화</button>
+  <button onclick="toggleReviewMode()">모드 전환</button>
+  <button onclick="resetProgress()">진행 초기화</button>
 
   <script>
     const questions = [
@@ -199,125 +177,107 @@
             { q: "노년기 우울장애의 위험요인에 대하여 생물학적 위험요인, 심리학적 위험요인을 각각 2가지 이상 기술하시오", a: "생물학적: 여성, 심혈관 질환, 코티솔의 혈중 농도 증가 지속, 세로토닌계 신경전달의 활성 저하, 세로토닌 수용체 유전자 이상 \n심리학적: 양가감정, 신경증, 인지왜곡, 스트레스성 생활사건, 낮은 사회경제적 상태" }
         ];
 
-    let wrongList = JSON.parse(localStorage.getItem('wrongList') || "[]");
-    let mode = localStorage.getItem('mode') || "normal";
-    let shuffled = JSON.parse(localStorage.getItem('shuffled') || "[]");
-    let currentIndex = parseInt(localStorage.getItem('currentIndex') || "0");
+    let shuffledQuestions = [];
+    let currentIndex = 0;
+    let reviewMode = false;
+    let wrongAnswers = JSON.parse(localStorage.getItem("wrongAnswers") || "[]");
 
-    function shuffleArray(arr) {
-      return arr.sort(() => Math.random() - 0.5);
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
     }
 
-    function startMode(newMode) {
-      mode = newMode;
-      if (mode === "normal") {
-        shuffled = shuffleArray(questions.map((_, i) => i));
+    function loadProgress() {
+      const savedIndex = localStorage.getItem("currentIndex");
+      const savedShuffle = localStorage.getItem("shuffledQuestions");
+      if (savedIndex && savedShuffle) {
+        currentIndex = parseInt(savedIndex, 10);
+        shuffledQuestions = JSON.parse(savedShuffle);
       } else {
-        if (wrongList.length === 0) {
-          alert("오답 리스트가 비어있습니다.");
-          mode = "normal";
-          shuffled = shuffleArray(questions.map((_, i) => i));
-        } else {
-          shuffled = shuffleArray(wrongList.map((_, i) => i));
-        }
+        shuffledQuestions = shuffle([...questions]);
       }
-      currentIndex = 0;
-      saveProgress();
-      document.getElementById("mode").innerText = `모드: ${mode === "normal" ? "일반" : "복습"}`;
-      loadQuestion();
     }
 
     function saveProgress() {
-      localStorage.setItem('wrongList', JSON.stringify(wrongList));
-      localStorage.setItem('mode', mode);
-      localStorage.setItem('shuffled', JSON.stringify(shuffled));
-      localStorage.setItem('currentIndex', currentIndex);
+      localStorage.setItem("currentIndex", currentIndex);
+      localStorage.setItem("shuffledQuestions", JSON.stringify(shuffledQuestions));
+      localStorage.setItem("wrongAnswers", JSON.stringify(wrongAnswers));
     }
 
-    function updateCounter() {
-      const total = shuffled.length;
-      const remaining = total - currentIndex;
-      const percent = total > 0 ? ((currentIndex / total) * 100).toFixed(1) : 0;
-      document.getElementById("counter").innerText = `진행률: ${percent}%  |  남은 문제: ${remaining} / ${total}`;
-      document.getElementById("progress-bar").style.width = `${percent}%`;
+    function resetProgress() {
+      if (confirm("진행 상황을 초기화할까요?")) {
+        currentIndex = 0;
+        wrongAnswers = [];
+        shuffledQuestions = shuffle([...questions]);
+        saveProgress();
+        renderQuestion();
+      }
     }
 
-    function loadQuestion() {
-      if (currentIndex >= shuffled.length) {
-        document.getElementById("question").innerText = "모든 문제를 풀었습니다!";
-        document.getElementById("answer").style.display = "none";
-        updateCounter();
+    function renderQuestion() {
+      if (reviewMode && wrongAnswers.length === 0) {
+        document.getElementById("question").innerText = "오답이 없습니다.";
+        document.getElementById("answers").innerHTML = "";
         return;
       }
-      let qObj = (mode === "normal") ? questions[shuffled[currentIndex]] : wrongList[shuffled[currentIndex]];
-      document.getElementById("question").innerText = qObj.q;
-      document.getElementById("answer").innerText = qObj.a;
-      document.getElementById("answer").style.display = "none";
-      updateCounter();
-      saveProgress();
-    }
 
-    function showAnswer() {
-      document.getElementById("answer").style.display = "block";
-    }
+      const questionList = reviewMode ? wrongAnswers : shuffledQuestions;
 
-    function markCorrect() {
-      if (mode === "review") {
-        const currentQ = wrongList[shuffled[currentIndex]];
-        wrongList = wrongList.filter(item => !(item.q === currentQ.q && item.a === currentQ.a));
-        alert("오답 리스트에서 제거되었습니다.");
-        shuffled.splice(currentIndex, 1);
-        if (currentIndex >= shuffled.length) {
-          loadQuestion();
-        } else {
-          loadQuestion();
-        }
-      } else {
-        alert("일반 모드에서는 정답 버튼이 오답 리스트에 영향을 주지 않습니다.");
+      if (currentIndex >= questionList.length) {
+        document.getElementById("question").innerText = "퀴즈가 끝났습니다!";
+        document.getElementById("answers").innerHTML = "";
+        return;
       }
-      saveProgress();
+
+      const q = questionList[currentIndex];
+      document.getElementById("question").innerText = q.q;
+
+      document.getElementById("answers").innerHTML = `
+        <button onclick="checkAnswer('${q.a}')">${q.a}</button>
+        <button onclick="markWrong('${q.q}','${q.a}')">오답</button>
+      `;
+
+      document.getElementById("status").innerText =
+        `모드: ${reviewMode ? "복습" : "일반"} / 남은 문제: ${questionList.length - currentIndex}`;
     }
 
-    function markWrong() {
-      let qObj = (mode === "normal") ? questions[shuffled[currentIndex]] : wrongList[shuffled[currentIndex]];
-      if (!wrongList.some(item => item.q === qObj.q && item.a === qObj.a)) {
-        wrongList.push(qObj);
-        alert("오답 리스트에 추가되었습니다.");
-      } else {
-        alert("이미 오답 리스트에 있습니다.");
-      }
+    function checkAnswer(answer) {
+      alert("정답: " + answer);
+      currentIndex++;
       saveProgress();
+      renderQuestion();
+    }
+
+    function markWrong(q, a) {
+      if (!wrongAnswers.find(item => item.q === q)) {
+        wrongAnswers.push({ q, a });
+      }
+      currentIndex++;
+      saveProgress();
+      renderQuestion();
     }
 
     function nextQuestion() {
       currentIndex++;
-      loadQuestion();
+      saveProgress();
+      renderQuestion();
     }
 
-    function toggleMode() {
-      if (mode === "normal") {
-        startMode("review");
-      } else {
-        startMode("normal");
-      }
+    function toggleReviewMode() {
+      reviewMode = !reviewMode;
+      currentIndex = 0;
+      renderQuestion();
     }
 
-    function resetProgress() {
-      if (confirm("진행 상황과 오답 리스트를 초기화하시겠습니까?")) {
-        wrongList = [];
-        shuffled = [];
-        currentIndex = 0;
-        mode = "normal";
-        localStorage.clear();
-        startMode("normal");
-      }
-    }
+    window.onload = () => {
+      loadProgress();
+      renderQuestion();
+    };
+  </script>
 
-    if (shuffled.length === 0) {
-      startMode(mode);
-    } else {
-      document.getElementById("mode").innerText = `모드: ${mode === "normal" ? "일반" : "복습"}`;
-      loadQuestion();
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js?v=3")
+        .then(() => console.log("Service Worker registered"));
     }
   </script>
 </body>
