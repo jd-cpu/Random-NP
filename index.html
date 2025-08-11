@@ -39,6 +39,8 @@
   <div class="controls" id="controls">
     <button id="btnShowAnswer">정답 보기</button>
     <button id="btnMarkWrong">오답 저장</button>
+    <!-- 이전 버튼: 기존 디자인/스타일 유지, Next 왼쪽에 배치 -->
+    <button id="btnPrev">이전 문제</button>
     <button id="btnNext">다음 문제</button>
   </div>
 
@@ -234,6 +236,7 @@
   const elBtnShow = document.getElementById('btnShowAnswer');
   const elBtnWrong = document.getElementById('btnMarkWrong');
   const elBtnNext = document.getElementById('btnNext');
+  const elBtnPrev = document.getElementById('btnPrev'); // 새로 추가
   const elBtnToggle = document.getElementById('btnToggleMode');
   const elBtnReset = document.getElementById('btnReset');
   const elProgressInfo = document.getElementById('progressInfo');
@@ -351,6 +354,26 @@
     elBtnToggle.textContent = mode === 'normal' ? `복습 모드 (${wrongList.length})` : '일반 모드로';
   }
 
+  // 오답 목록에서 (q,a)로 항목 제거 (발견되면 true 반환)
+  function removeFromWrongListByQA(q, a) {
+    const i = wrongList.findIndex(it => it.q === q && it.a === a);
+    if (i !== -1) {
+      wrongList.splice(i, 1);
+      // 리뷰 순서 재생성 및 인덱스 보정
+      orderReview = shuffledArray(wrongList.length);
+      idxReview = Math.min(idxReview, Math.max(0, orderReview.length - 1));
+      // 만약 복습 모드였고 오답이 이제 비어있다면 자동으로 일반 모드로 전환
+      if (mode === 'review' && wrongList.length === 0) {
+        mode = 'normal';
+        localStorage.setItem(KEY.MODE, mode);
+      }
+      saveAll();
+      updateToggleText();
+      return true;
+    }
+    return false;
+  }
+
   // 버튼 actions
   function showAnswer() {
     const cur = getCurrentQuestion();
@@ -390,6 +413,44 @@
     render();
   }
 
+  // 이전 문제: 인덱스 감소, 진행률 반영, 이전 문제가 오답이면 오답 목록에서 제거
+  function prevQuestion() {
+    const info = currentListAndIndex();
+    if (info.total === 0) { render(); return; }
+
+    if (info.listType === 'normal') {
+      if (idxNormal <= 0) {
+        // 첫 문제이면 아무 동작 안 함
+        return;
+      }
+      idxNormal = Math.max(0, idxNormal - 1);
+
+      // 이전 문제 객체 (questions 기준)
+      const qIndex = orderNormal[idxNormal];
+      const prev = questions[qIndex];
+      // 이전 문제가 오답 리스트에 들어있다면 제거
+      removeFromWrongListByQA(prev.q, prev.a);
+
+    } else { // review 모드
+      if (idxReview <= 0) {
+        return;
+      }
+      idxReview = Math.max(0, idxReview - 1);
+      // 이전 문제의 wrongList 인덱스(변경 전의 orderReview를 사용)
+      const rIndex = orderReview[idxReview];
+      const prev = wrongList[rIndex];
+      if (prev) {
+        // wrongList에서 제거하면 orderReview가 재생성되고 idxReview는 보정됩니다
+        removeFromWrongListByQA(prev.q, prev.a);
+        // idxReview는 removeFromWrongListByQA 내부에서 보정되었으므로 추가 보정
+        idxReview = Math.min(idxReview, Math.max(0, orderReview.length - 1));
+      }
+    }
+
+    saveAll();
+    render();
+  }
+
   function toggleMode() {
     // switch mode, reset index for that mode (but keep saved progress)
     mode = (mode === 'normal') ? 'review' : 'normal';
@@ -418,6 +479,7 @@
   elBtnShow.addEventListener('click', showAnswer);
   elBtnWrong.addEventListener('click', markWrong);
   elBtnNext.addEventListener('click', nextQuestion);
+  elBtnPrev.addEventListener('click', prevQuestion); // 이전 버튼 바인딩
   elBtnToggle.addEventListener('click', toggleMode);
   elBtnReset.addEventListener('click', resetProgress);
 
