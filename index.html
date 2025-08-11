@@ -5,35 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>정신과 랜덤 Post-test 퀴즈</title>
 <style>
-  body { font-family: Arial, sans-serif; margin: 20px; }
-  #quiz-container { max-width: 600px; margin: auto; }
-  .question { font-size: 1.2em; margin-bottom: 20px; }
-  .answer { font-weight: bold; margin-top: 10px; display: none; }
-  button { margin: 5px; padding: 10px 15px; font-size: 1em; }
-  #progress-container { margin-top: 10px; }
-  #progress-bar { width: 100%; background-color: #ddd; height: 20px; border-radius: 5px; overflow: hidden; }
-  #progress-fill { height: 100%; width: 0; background-color: #4CAF50; }
+  body { font-family: Arial, sans-serif; background: #f4f4f4; text-align: center; }
+  #quiz-container { background: white; max-width: 500px; margin: 50px auto; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+  button { margin: 5px; padding: 10px 15px; border: none; border-radius: 5px; background: #4CAF50; color: white; font-size: 14px; cursor: pointer; }
+  button:hover { background: #45a049; }
+  #progress-bar { height: 20px; background: #4CAF50; border-radius: 5px; transition: width 0.3s; }
+  #progress-container { background: #ddd; border-radius: 5px; overflow: hidden; margin: 10px 0; }
 </style>
 </head>
 <body>
+
 <div id="quiz-container">
-  <div id="mode-container">
-    <button id="mode-toggle">복습 모드: 꺼짐</button>
-  </div>
-  <div class="question" id="question"></div>
-  <div class="answer" id="answer"></div>
+  <h1>정신과 랜덤 Post-test 퀴즈</h1>
+  <div id="progress-container"><div id="progress-bar"></div></div>
+  <p id="progress-text"></p>
+  <p id="question"></p>
   <button id="show-answer">정답 보기</button>
-  <button id="prev-question">이전 문제</button>
-  <button id="next-question">다음 문제</button>
-  <div id="progress-container">
-    <div id="progress-text"></div>
-    <div id="progress-bar"><div id="progress-fill"></div></div>
-  </div>
+  <p id="answer" style="display:none; font-weight:bold;"></p>
+  <br>
+  <button id="prev-btn">이전 문제</button>
+  <button id="next-btn" style="display:none;">다음 문제</button>
+  <button id="wrong-btn" style="display:none;">오답 추가</button>
+  <br><br>
+  <button id="toggle-mode">복습 모드</button>
 </div>
 
 <script>
-  // 문제 데이터: { q: "", a: "" } 형식
-  const questions = [
+const questions = [
             { q: "도파민을 주된 신경전달물질로 사용하는 4개의 신경 경로를 기술하시오.", a: "Nigrostriatal, mesocortical, mesolimbic, tuberoinfundibular pathway" },
             { q: "Piaget의 인지 발달 4단계를 쓰고 해당하는 나이와 특징을 약술하시오.", a: "감각운동기(출생-2세, 감각적 관찰, 운동기능 조절) \n전조작기(2-7세, semiotic function) \n구체적 조작기(7-12세, 현실 인식, 조작적 사고, 외부 정보에 주의 기울임, 타인의 관점에서 사물 봄) \n형식적 조작기(12세-후기 청소년기, 논리적, 체계적, 추상적 사고, 연역적 추리)" },
             { q: "프로이트가 ‘구조 이론(structural theory)'에서 소개한 이드(id), 자아(ego), 초자아(superego)의 기능에 대해 약술하시오.", a: "이드: 본능적 욕구, 즉각 만족 원함, 무의식의 대부분, 심리적 현상의 에너지 공급원 \n자아: 현실원칙 입각, 모든 정신현상 총괄, 이드와 현실 사이 타협 추구, 이드와 초자아 사이에서 갈등 \n초자아: 양심, 이상 추구" },
@@ -186,86 +184,104 @@
             { q: "노년기 우울장애의 위험요인에 대하여 생물학적 위험요인, 심리학적 위험요인을 각각 2가지 이상 기술하시오", a: "생물학적: 여성, 심혈관 질환, 코티솔의 혈중 농도 증가 지속, 세로토닌계 신경전달의 활성 저하, 세로토닌 수용체 유전자 이상 \n심리학적: 양가감정, 신경증, 인지왜곡, 스트레스성 생활사건, 낮은 사회경제적 상태" }
         ];
 
-  let currentIndex = 0;
-  let quizOrder = shuffle([...Array(questions.length).keys()]);
-  let reviewMode = false;
-  let wrongList = [];
-  let historyStack = [];
+let normalQuestions = [...questions];
+let wrongQuestions = [];
+let currentIndex = 0;
+let currentMode = 'normal'; // normal or review
+let historyStack = [];
 
-  const questionEl = document.getElementById('question');
-  const answerEl = document.getElementById('answer');
-  const progressText = document.getElementById('progress-text');
-  const progressFill = document.getElementById('progress-fill');
-  const modeToggle = document.getElementById('mode-toggle');
+function updateProgress() {
+  let total = currentMode === 'normal' ? questions.length : wrongQuestions.length;
+  let progress = currentMode === 'normal'
+      ? questions.length - normalQuestions.length
+      : questions.length - wrongQuestions.length;
+  document.getElementById('progress-text').innerText = `${progress} / ${total}`;
+  document.getElementById('progress-bar').style.width = `${(progress / total) * 100}%`;
+}
 
-  document.getElementById('show-answer').addEventListener('click', () => {
-    answerEl.style.display = 'block';
-  });
-
-  document.getElementById('next-question').addEventListener('click', () => {
-    historyStack.push(currentIndex);
-    nextQuestion();
-  });
-
-  document.getElementById('prev-question').addEventListener('click', () => {
-    if (historyStack.length > 0) {
-      currentIndex = historyStack.pop();
-      if (!reviewMode) {
-        const idxInWrong = wrongList.indexOf(currentIndex);
-        if (idxInWrong !== -1) wrongList.splice(idxInWrong, 1);
-      }
-      renderQuestion();
-    }
-  });
-
-  modeToggle.addEventListener('click', () => {
-    reviewMode = !reviewMode;
-    modeToggle.textContent = `복습 모드: ${reviewMode ? '켜짐' : '꺼짐'}`;
-    resetQuiz();
-  });
-
-  function renderQuestion() {
-    const qIndex = quizOrder[currentIndex];
-    const { q, a } = questions[qIndex];
-    questionEl.textContent = q;
-    answerEl.textContent = a;
-    answerEl.style.display = 'none';
-    updateProgress();
+function loadQuestion(index) {
+  if (currentMode === 'normal') {
+    document.getElementById('question').innerText = normalQuestions[index]?.q || "문제가 없습니다.";
+    document.getElementById('answer').innerText = normalQuestions[index]?.a || "";
+  } else {
+    document.getElementById('question').innerText = wrongQuestions[index]?.q || "문제가 없습니다.";
+    document.getElementById('answer').innerText = wrongQuestions[index]?.a || "";
   }
+}
 
-  function updateProgress() {
-    progressText.textContent = `${currentIndex + 1} / ${quizOrder.length}`;
-    progressFill.style.width = `${((currentIndex + 1) / quizOrder.length) * 100}%`;
+function showAnswer() {
+  document.getElementById('answer').style.display = 'block';
+  document.getElementById('next-btn').style.display = 'inline-block';
+  document.getElementById('wrong-btn').style.display = 'inline-block';
+}
+
+function nextQuestion() {
+  historyStack.push(currentIndex);
+  if (currentMode === 'normal') {
+    normalQuestions.splice(currentIndex, 1);
+    if (currentIndex >= normalQuestions.length) currentIndex = 0;
+  } else {
+    wrongQuestions.splice(currentIndex, 1);
+    if (currentIndex >= wrongQuestions.length) currentIndex = 0;
   }
+  document.getElementById('answer').style.display = 'none';
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('wrong-btn').style.display = 'none';
+  updateProgress();
+  loadQuestion(currentIndex);
+}
 
-  function nextQuestion() {
-    if (currentIndex < quizOrder.length - 1) {
-      currentIndex++;
-      renderQuestion();
-    } else if (reviewMode && wrongList.length > 0) {
-      quizOrder = [...wrongList];
-      wrongList = [];
-      currentIndex = 0;
-      renderQuestion();
+function prevQuestion() {
+  if (historyStack.length > 0) {
+    currentIndex = historyStack.pop();
+    if (currentMode === 'normal') {
+      // 일반 모드에서는 진행률 감소 & 문제 복원
+      normalQuestions.splice(currentIndex, 0, questions.find(q => q.q === normalQuestions[currentIndex]?.q));
     } else {
-      alert("퀴즈 완료!");
+      // 복습 모드에서는 진행률만 감소, 문제 삭제 안 함
     }
+    updateProgress();
+    loadQuestion(currentIndex);
+    document.getElementById('answer').style.display = 'none';
+    document.getElementById('next-btn').style.display = 'none';
+    document.getElementById('wrong-btn').style.display = 'none';
   }
+}
 
-  function resetQuiz() {
+function addWrong() {
+  const currentList = currentMode === 'normal' ? normalQuestions : wrongQuestions;
+  const currentQ = currentList[currentIndex];
+  if (!wrongQuestions.some(q => q.q === currentQ.q)) {
+    wrongQuestions.push(currentQ);
+  }
+}
+
+function toggleMode() {
+  if (currentMode === 'normal') {
+    currentMode = 'review';
     currentIndex = 0;
     historyStack = [];
-    wrongList = [];
-    quizOrder = shuffle([...Array(questions.length).keys()]);
-    renderQuestion();
+    loadQuestion(currentIndex);
+    document.getElementById('toggle-mode').innerText = '일반 모드';
+  } else {
+    currentMode = 'normal';
+    currentIndex = 0;
+    historyStack = [];
+    loadQuestion(currentIndex);
+    document.getElementById('toggle-mode').innerText = '복습 모드';
   }
+  updateProgress();
+}
 
-  function shuffle(array) {
-    return array.sort(() => Math.random() - 0.5);
-  }
+document.getElementById('show-answer').addEventListener('click', showAnswer);
+document.getElementById('next-btn').addEventListener('click', nextQuestion);
+document.getElementById('prev-btn').addEventListener('click', prevQuestion);
+document.getElementById('wrong-btn').addEventListener('click', addWrong);
+document.getElementById('toggle-mode').addEventListener('click', toggleMode);
 
-  // 초기 렌더링
-  renderQuestion();
+loadQuestion(currentIndex);
+updateProgress();
 </script>
+
 </body>
 </html>
