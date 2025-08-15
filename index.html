@@ -41,10 +41,8 @@
     <button id="btnMarkWrong">오답 저장</button>
     <button id="btnPrev">이전 문제</button>
     <button id="btnNext">다음 문제</button>
-    <!-- 복습 모드에서 첫 문제로 돌아가기 버튼 -->
     <button id="btnRestartReview" style="display:none;">복습 첫 문제로</button>
-    <!-- 복습 모드에서 오답 제거 버튼 -->
-    <button id="btnRemoveWrong" style="display:none;">오답 제거</button>
+    <button id="btnRemoveWrong" style="display:inline-block;">오답 제거</button>
   </div>
 
   <div class="progress-wrap">
@@ -54,7 +52,6 @@
   </div>
 
 <script>
-  // 기존 문제 데이터
   const questions = [
     { q: "도파민을 주된 신경전달물질로 사용하는 4개의 신경 경로를 기술하시오.", a: "Nigrostriatal, mesocortical, mesolimbic, tuberoinfundibular pathway" },
             { q: "Piaget의 인지 발달 4단계를 쓰고 해당하는 나이와 특징을 약술하시오.", a: "감각운동기(출생-2세, 감각적 관찰, 운동기능 조절) \n전조작기(2-7세, semiotic function) \n구체적 조작기(7-12세, 현실 인식, 조작적 사고, 외부 정보에 주의 기울임, 타인의 관점에서 사물 봄) \n형식적 조작기(12세-후기 청소년기, 논리적, 체계적, 추상적 사고, 연역적 추리)" },
@@ -314,13 +311,13 @@
     saveAll();
     const info=currentListAndIndex();
 
-    // 버튼 표시
+    // 버튼 표시: 복습 모드에서만 오답 제거 버튼 숨김
     if(mode==='review' && info.total>0){
       elBtnRestartReview.style.display='inline-block';
-      elBtnRemoveWrong.style.display='inline-block';
+      elBtnRemoveWrong.style.display='none';
     } else {
       elBtnRestartReview.style.display='none';
-      elBtnRemoveWrong.style.display='none';
+      elBtnRemoveWrong.style.display='inline-block';
     }
 
     if(info.total===0){
@@ -332,7 +329,6 @@
       return;
     }
 
-    // 완료 상태 반영 (추가: 복습 모드도 진행률 끝까지)
     if(info.idx >= info.total){
       elQuestion.innerText='모든 문제가 완료되었습니다.';
       elAnswer.style.display='none';
@@ -385,7 +381,6 @@
     const cur=getCurrentQuestion();
     if(!cur) return;
     if(removeFromWrongListByQA(cur.q,cur.a)){
-      // 현재 문제 제거 후 idxReview가 총 문제 수를 초과하면 마지막으로
       if(idxReview >= wrongList.length) idxReview = Math.max(0, wrongList.length-1);
       saveAll();
       render();
